@@ -3,7 +3,9 @@ package symboletable
 import "testing"
 
 func TestNew(t *testing.T) {
-	st := New()
+	input := `@Xxx
+(label1)`
+	st := New(input)
 	st.addEntry("TEST", 0)
 	address := st.getAddress("TEST")
 	if address != 0 {
@@ -16,5 +18,9 @@ func TestNew(t *testing.T) {
 	address = st.getAddress("R7")
 	if address != 7 {
 		t.Fatalf("address is expected %d. got=%d", 7, address)
+	}
+	address = st.getAddress("label1")
+	if address != 1 {
+		t.Fatalf("address is expected %d. got=%d", 1, address)
 	}
 }
