@@ -2,14 +2,13 @@ package symboletable
 
 import (
 	"fmt"
-	"strings"
 )
 
 type SymboleTable struct {
 	table map[string]int
 }
 
-func New(input string) *SymboleTable {
+func New(commands []string) *SymboleTable {
 	table := map[string]int{}
 	table["SP"] = 0
 	table["LCL"] = 1
@@ -22,32 +21,33 @@ func New(input string) *SymboleTable {
 	table["SCREEN"] = 16384
 	table["KBD"] = 24567
 	st := &SymboleTable{table}
-	st.scan(input)
+	st.scan(commands)
 	return st
 }
 
-func (st *SymboleTable) scan(input string) {
-	commands := strings.Split(input, "\n")
-	for i, command := range commands {
-		trimed := strings.TrimSpace(command)
-		lastIndex := len(trimed) - 1
-		if trimed[0:1] == "(" && trimed[lastIndex:] == ")" {
-			label := trimed[1:lastIndex]
-			st.addEntry(label, i)
+func (st *SymboleTable) scan(commands []string) {
+	i := 0
+	for _, command := range commands {
+		lastIndex := len(command) - 1
+		if command[0:1] == "(" && command[lastIndex:] == ")" {
+			label := command[1:lastIndex]
+			st.AddEntry(label, i)
+			fmt.Printf("%#v, %#v\n", label, i)
+			continue
 		}
 		i++
 	}
 }
 
-func (st *SymboleTable) addEntry(symbol string, address int) {
+func (st *SymboleTable) AddEntry(symbol string, address int) {
 	st.table[symbol] = address
 }
 
-func (st *SymboleTable) contains(symbol string) bool {
+func (st *SymboleTable) Contains(symbol string) bool {
 	_, ok := st.table[symbol]
 	return ok
 }
 
-func (st *SymboleTable) getAddress(symbol string) int {
+func (st *SymboleTable) GetAddress(symbol string) int {
 	return st.table[symbol]
 }

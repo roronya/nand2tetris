@@ -57,7 +57,9 @@ func (p *Parser) CommandType() int {
 	if command[0] == '@' {
 		return A_COMMAND
 	}
-	// TODO: CとLの判定
+	if command[0] == '(' {
+		return L_COMMAND
+	}
 	return C_COMMAND
 }
 

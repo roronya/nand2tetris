@@ -10,6 +10,7 @@ import (
 
 	"github.com/roronya/nand2tetris/06/code"
 	"github.com/roronya/nand2tetris/06/parser"
+	"github.com/roronya/nand2tetris/06/symboletable"
 )
 
 func main() {
@@ -22,7 +23,19 @@ func main() {
 		log.Fatal(err)
 	}
 	input := string(asm)
+	spliteds := strings.Split(strings.TrimSpace(input), "\n")
+	commands := []string{}
+	for _, splited := range spliteds {
+		command := strings.TrimSpace(splited)
+		if len(command) == 0 || command[0:2] == "//" {
+			continue
+		}
+		commands = append(commands, command)
+	}
+	commands = append(commands, "EOF")
 
+	address := 16
+	st := symboletable.New(commands)
 	p := parser.New(input)
 	evaluated := []string{}
 	for p.HasMoreCommands() {
@@ -30,9 +43,21 @@ func main() {
 		commandType := p.CommandType()
 		switch commandType {
 		case parser.A_COMMAND:
-			symbol, _ := strconv.Atoi(p.Symbol())
-			binary := toBynary(symbol)
+			symbol := p.Symbol()
+			value, err := strconv.Atoi(symbol)
+			if err != nil {
+				if st.Contains(symbol) {
+					value = st.GetAddress(symbol)
+				} else {
+					st.AddEntry(symbol, address)
+					address++
+					value = address
+				}
+			}
+			binary := toBynary(value)
 			evaluated = append(evaluated, binary)
+		case parser.L_COMMAND:
+			// do nothing
 		default:
 			binary := fmt.Sprintf("111%s%s%s", code.Comp(p.Comp()), code.Dest(p.Dest()), code.Jump(p.Jump()))
 			evaluated = append(evaluated, binary)
