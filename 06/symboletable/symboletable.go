@@ -32,7 +32,6 @@ func (st *SymboleTable) scan(commands []string) {
 		if command[0:1] == "(" && command[lastIndex:] == ")" {
 			label := command[1:lastIndex]
 			st.AddEntry(label, i)
-			fmt.Printf("%#v, %#v\n", label, i)
 			continue
 		}
 		i++

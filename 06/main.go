@@ -23,20 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 	input := string(asm)
-	spliteds := strings.Split(strings.TrimSpace(input), "\n")
-	commands := []string{}
-	for _, splited := range spliteds {
-		command := strings.TrimSpace(splited)
-		if len(command) == 0 || command[0:2] == "//" {
-			continue
-		}
-		commands = append(commands, command)
-	}
-	commands = append(commands, "EOF")
-
+	commands := preprocess(input)
 	address := 16
 	st := symboletable.New(commands)
-	p := parser.New(input)
+	p := parser.New(commands)
 	evaluated := []string{}
 	for p.HasMoreCommands() {
 		p.Advance()
@@ -69,6 +59,24 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func preprocess(input string) []string {
+	statements := strings.Split(input, "\n")
+	commands := []string{}
+	for _, statement := range statements {
+		command := trim(statement)
+		if len(command) == 0 || command[0:2] == "//" {
+			continue
+		}
+		commands = append(commands, command)
+	}
+	commands = append(commands, "EOF")
+	return commands
+}
+
+func trim(statement string) string {
+	return strings.Split(strings.TrimSpace(statement), " ")[0]
 }
 
 func toBynary(i int) string {

@@ -5,12 +5,9 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	input := `@Xxx
-M=1
-
-`
+	commands := []string{"@Xxx", "M=1"}
 	expected := []string{"@Xxx", "M=1"}
-	p := New(input)
+	p := New(commands)
 	if p.commands[0] != expected[0] {
 		t.Fatalf("p.commands[0] is exptected %s. got=%s", expected[0], p.commands[0])
 	}
@@ -26,9 +23,8 @@ M=1
 }
 
 func TestHasMoreCommands(t *testing.T) {
-	input := `@Xxx
-M=1`
-	p := New(input)
+	commands := []string{"@Xxx", "M=1"}
+	p := New(commands)
 	if !p.HasMoreCommands() {
 		t.Fatalf("p.HasMoreCommands is expected false. got=true.")
 	}
@@ -39,17 +35,14 @@ M=1`
 }
 
 func TestParse(t *testing.T) {
-	input := `@1
-@16383
-@0
-@-1`
+	commands := []string{"@1", "@16383", "@0", "@-1"}
 	expecteds := []string{
 		"1",
 		"16383",
 		"0",
 		"-1",
 	}
-	p := New(input)
+	p := New(commands)
 	for _, expected := range expecteds {
 		if !p.HasMoreCommands() {
 			t.Fatalf("p.HadMoreCommands() is expected true. got=false")
@@ -61,26 +54,11 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestCommentParse(t *testing.T) {
-	input := `// comment
-
-@1
-// comment`
-	p := New(input)
-	println(p.peekCommand())
-	if p.HasMoreCommands() {
-		p.Advance()
-	}
-	if p.Symbol() != "1" {
-		t.Fatalf("p.Symbol() is expected %s. got=%s", "1", p.Symbol())
-	}
-}
-
 func TestDest(t *testing.T) {
-	input := "M=1"
+	commands := []string{"M=1"}
 	expectedDest := "M"
 	expectedComp := "1"
-	p := New(input)
+	p := New(commands)
 	p.Advance()
 	actualDest := p.Dest()
 	actualComp := p.Comp()
@@ -92,10 +70,10 @@ func TestDest(t *testing.T) {
 	}
 }
 func TestJump(t *testing.T) {
-	input := "D;JGT"
+	commands := []string{"D;JGT"}
 	expectedJump := "JGT"
 	expectedComp := "D"
-	p := New(input)
+	p := New(commands)
 	p.Advance()
 	actualJump := p.Jump()
 	actualComp := p.Comp()
@@ -108,11 +86,19 @@ func TestJump(t *testing.T) {
 }
 
 func TestC(t *testing.T) {
-	input := `D=1`
-	p := New(input)
+	commands := []string{"D=1"}
+	p := New(commands)
 	if p.HasMoreCommands() {
 		p.Advance()
 	}
 	p.Dest()
 
+}
+
+func TestAdd(t *testing.T) {
+	commands := []string{"@2", "D=A", "@3", "D=D+A", "@0", "M=D"}
+	p := New(commands)
+	if p.HasMoreCommands() {
+		p.Advance()
+	}
 }

@@ -2,13 +2,11 @@ package parser
 
 import (
 	"regexp"
-	"strings"
 )
 
 type Parser struct {
-	commands     []string
-	position     int
-	peekPosition int
+	commands []string
+	position int
 }
 
 const (
@@ -20,36 +18,24 @@ const (
 var EQUAL_REGEXP = regexp.MustCompile("=")
 var SEMICOLON_REGEXP = regexp.MustCompile(";")
 
-func New(input string) *Parser {
-	return &Parser{commands: strings.Split(strings.TrimSpace(input), "\n"), position: -1}
-}
-
-func (p *Parser) skipComment() {
-	p.peekPosition = p.position + 1
-	for p.peekPosition < len(p.commands) && (len(p.peekCommand()) == 0 || p.peekCommand()[0:2] == "//") {
-		p.peekPosition++
-	}
-}
-
-func (p *Parser) trimComment(command string) string {
-	return strings.Split(command, " ")[0]
+func New(commands []string) *Parser {
+	return &Parser{commands: commands, position: -1}
 }
 
 func (p *Parser) curCommand() string {
-	return strings.TrimSpace(p.commands[p.position])
-}
-
-func (p *Parser) peekCommand() string {
-	return strings.TrimSpace(p.commands[p.peekPosition])
+	return p.commands[p.position]
 }
 
 func (p *Parser) HasMoreCommands() bool {
-	p.skipComment()
-	return p.position+1 < len(p.commands)
+	if p.position > len(p.commands) {
+		return false
+	}
+	peekCommand := p.commands[p.position+1]
+	return peekCommand != "EOF"
 }
 
 func (p *Parser) Advance() {
-	p.position = p.peekPosition
+	p.position++
 }
 
 func (p *Parser) CommandType() int {
@@ -64,12 +50,11 @@ func (p *Parser) CommandType() int {
 }
 
 func (p *Parser) Symbol() string {
-	command := p.trimComment(p.curCommand())
-	return command[1:]
+	return p.curCommand()[1:]
 }
 
 func (p *Parser) Dest() string {
-	command := p.trimComment(p.curCommand())
+	command := p.curCommand()
 	index := EQUAL_REGEXP.FindStringIndex(command)
 	if len(index) == 0 {
 		return ""
@@ -78,7 +63,7 @@ func (p *Parser) Dest() string {
 }
 
 func (p *Parser) Comp() string {
-	command := p.trimComment(p.curCommand())
+	command := p.curCommand()
 	index := EQUAL_REGEXP.FindStringIndex(command)
 	if len(index) != 0 {
 		return command[index[1]:]
@@ -88,7 +73,7 @@ func (p *Parser) Comp() string {
 }
 
 func (p *Parser) Jump() string {
-	command := p.trimComment(p.curCommand())
+	command := p.curCommand()
 	index := SEMICOLON_REGEXP.FindStringIndex(command)
 	if len(index) == 0 {
 		return ""
