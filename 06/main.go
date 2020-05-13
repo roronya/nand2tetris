@@ -40,8 +40,8 @@ func main() {
 					value = st.GetAddress(symbol)
 				} else {
 					st.AddEntry(symbol, address)
-					address++
 					value = address
+					address++
 				}
 			}
 			binary := toBynary(value)
