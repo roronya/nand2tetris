@@ -23,17 +23,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-/**
-func TestAdvance(t *testing.T) {
-	commands := "push constant 7\npush constant 8\nadd"
-	p := newParser(commands)
-	p.Advance()
-	if !(p.position == 0 && p.nextPosition == 1) {
-		t.Fatalf("p.Advance() is expected setting position = 0, nextPosition = 1. got=position=%d, nextPosition=%d.", p.position, p.nextPosition)
-	}
-}
-**/
-
 func TestHasMoreCommands(t *testing.T) {
 	commands := "push constant 7\npush constant 8\nadd"
 	p := newParser(commands)
@@ -51,31 +40,37 @@ func TestHasMoreCommands(t *testing.T) {
 	}
 }
 
-/**
-func TestHasMoreCommands_空ファイルのとき(t *testing.T) {
-	commands := [][]string{
-		[]string{"EOF"},
+func TestAdvance(t *testing.T) {
+	commands := "push constant 7\npush constant 8\nadd"
+	p := newParser(commands)
+	p.HasMoreCommands()
+	p.Advance()
+	if p.command != "push constant 7" {
+		t.Fatalf("p.scanner.Text() is expected \"push constant 7\". got=%v", p.scanner.Text())
 	}
-	p := New(commands)
-	if p.HasMoreCommands() {
-		t.Fatalf("p.HasMoreCommands is expected false. got=true.")
+	p.HasMoreCommands()
+	p.Advance()
+	if p.command != "push constant 8" {
+		t.Fatalf("p.scanner.Text() is expected \"push constant 8\". got=%v", p.scanner.Text())
+	}
+	p.HasMoreCommands()
+	p.Advance()
+	if p.command != "add" {
+		t.Fatalf("p.scanner.Text() is expected \"add\". got=%v", p.scanner.Text())
 	}
 }
 
 func TestCommandType(t *testing.T) {
-	commands := [][]string{
-		[]string{"add"},
-		[]string{"sub"},
-		[]string{"neg"},
-		[]string{"eq"},
-		[]string{"gt"},
-		[]string{"lt"},
-		[]string{"and"},
-		[]string{"or"},
-		[]string{"not"},
-		[]string{"push"},
-		[]string{"EOF"},
-	}
+	commands := `add
+sub
+net
+eq
+gt
+lt
+and
+or
+not
+push`
 	expecteds := []VMCommandType{
 		C_ARITHMETIC,
 		C_ARITHMETIC,
@@ -88,23 +83,21 @@ func TestCommandType(t *testing.T) {
 		C_ARITHMETIC,
 		C_PUSH,
 	}
-	p := New(commands)
+	p := newParser(commands)
 	for _, expected := range expecteds {
+		p.HasMoreCommands()
 		p.Advance()
 		if p.CommandType != expected {
-			t.Fatalf("p.CommandType of %v is expected %v. got=%v", p.commands[p.position][0], expected, p.CommandType)
+			t.Fatalf("p.CommandType of %v is expected %v. got=%v", p.Command, expected, p.CommandType)
 		}
 	}
 }
 
 func TestArg(t *testing.T) {
-	commands := [][]string{
-		[]string{"push", "constant", "10"},
-	}
-	p := New(commands)
+	commands := "push constant 10"
+	p := newParser(commands)
 	p.Advance()
 	if !(p.Arg1 == "constant" && p.Arg2 == 10) {
 		t.Fatalf("p.Arg1 and p.Arg2 are expected Arg1=constant, Arg2=10. got=Arg1=%v, Arg2=%v", p.Arg1, p.Arg2)
 	}
 }
-**/

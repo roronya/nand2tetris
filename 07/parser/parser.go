@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"strings"
 )
 
 type VMCommandType int
@@ -34,7 +35,7 @@ var VMCommandTypeMap = map[string]VMCommandType{
 type Parser struct {
 	scanner     *bufio.Scanner
 	CommandType VMCommandType
-	command     []string
+	command     string
 	Command     string
 	Arg1        string
 	Arg2        int
@@ -48,22 +49,10 @@ func (p *Parser) HasMoreCommands() bool {
 	return p.scanner.Scan()
 }
 
-/**
-func (p *Parser) Advance() error {
-	p.position = p.nextPosition
-	p.nextPosition = p.nextPosition + 1
-	p.command = p.commands[p.position]
-	p.Command = p.command[0]
+func (p *Parser) Advance() {
+	p.command = p.scanner.Text()
+	commentSkiped := strings.Split(p.command, "//")
+	tokens := strings.Split(commentSkiped[0], " ")
+	p.Command = tokens[0]
 	p.CommandType = VMCommandTypeMap[p.Command]
-	switch p.CommandType {
-	case C_PUSH:
-		p.Arg1 = p.command[1]
-		i, err := strconv.Atoi(p.command[2])
-		if err != nil {
-			return err
-		}
-		p.Arg2 = i
-	}
-	return nil
 }
-**/
