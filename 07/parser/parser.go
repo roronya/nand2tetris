@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"bufio"
+)
+
 type VMCommandType int
 
 const (
@@ -28,23 +32,38 @@ var VMCommandTypeMap = map[string]VMCommandType{
 }
 
 type Parser struct {
-	commands     [][]string
-	position     int
-	nextPosition int
-	CommandType  VMCommandType
+	scanner     *bufio.Scanner
+	CommandType VMCommandType
+	command     []string
+	Command     string
+	Arg1        string
+	Arg2        int
 }
 
-func New(commands [][]string) *Parser {
-	return &Parser{commands: commands}
+func New(scanner *bufio.Scanner) *Parser {
+	return &Parser{scanner: scanner}
 }
 
 func (p *Parser) HasMoreCommands() bool {
-	return p.commands[p.nextPosition][0] != "EOF"
+	return p.scanner.Scan()
 }
 
-func (p *Parser) Advance() {
+/**
+func (p *Parser) Advance() error {
 	p.position = p.nextPosition
 	p.nextPosition = p.nextPosition + 1
-	command := p.commands[p.position][0]
-	p.CommandType = VMCommandTypeMap[command]
+	p.command = p.commands[p.position]
+	p.Command = p.command[0]
+	p.CommandType = VMCommandTypeMap[p.Command]
+	switch p.CommandType {
+	case C_PUSH:
+		p.Arg1 = p.command[1]
+		i, err := strconv.Atoi(p.command[2])
+		if err != nil {
+			return err
+		}
+		p.Arg2 = i
+	}
+	return nil
 }
+**/
