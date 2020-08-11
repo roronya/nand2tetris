@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bufio"
+	"strconv"
 	"strings"
 )
 
@@ -49,10 +50,20 @@ func (p *Parser) HasMoreCommands() bool {
 	return p.scanner.Scan()
 }
 
-func (p *Parser) Advance() {
+func (p *Parser) Advance() error {
 	p.command = p.scanner.Text()
 	commentSkiped := strings.Split(p.command, "//")
 	tokens := strings.Split(commentSkiped[0], " ")
 	p.Command = tokens[0]
 	p.CommandType = VMCommandTypeMap[p.Command]
+	switch p.CommandType {
+	case C_PUSH:
+		p.Arg1 = tokens[1]
+		casted, err := strconv.Atoi(tokens[2])
+		if err != nil {
+			return err
+		}
+		p.Arg2 = casted
+	}
+	return nil
 }

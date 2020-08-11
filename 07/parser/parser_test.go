@@ -96,6 +96,7 @@ push`
 func TestArg(t *testing.T) {
 	commands := "push constant 10"
 	p := newParser(commands)
+	p.HasMoreCommands()
 	p.Advance()
 	if !(p.Arg1 == "constant" && p.Arg2 == 10) {
 		t.Fatalf("p.Arg1 and p.Arg2 are expected Arg1=constant, Arg2=10. got=Arg1=%v, Arg2=%v", p.Arg1, p.Arg2)
