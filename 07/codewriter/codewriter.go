@@ -1,15 +1,17 @@
 package codewriter
 
 import (
-	"bufio"
 	"bytes"
+	"fmt"
+	"io/ioutil"
 
 	"github.com/roronya/nand2tetris/07/parser"
 )
 
+var segmentMap = map[string]string{}
+
 type CodeWriter struct {
 	filename string
-	writer   *bufio.Writer
 	buffer   *bytes.Buffer
 }
 
@@ -21,17 +23,46 @@ func New(filename string) *CodeWriter {
 
 func (cw *CodeWriter) setFileName(filename string) {
 	cw.filename = filename
-	cw.buffer = new(bytes.Buffer)
-	cw.writer = bufio.NewWriter(cw.buffer)
+	cw.buffer = bytes.NewBuffer([]byte(""))
 }
 
-func (cw *CodeWriter) writePushPop(command parser.VMCommandType, segment string, index int) {
+func (cw *CodeWriter) WritePushPop(command parser.VMCommandType, segment string, index int) {
 	switch command {
 	case parser.C_PUSH:
-		// アセンブリでsegmentに書き込むようなコードをwriterで書き込む
-		// M=index
-		// D=M
-		// M=segment
-		// M=D
+		cw.writePush(segment, index)
 	}
+}
+
+func (cw *CodeWriter) writePush(segment string, index int) {
+	switch segment {
+	case "constant":
+		cw.buffer.WriteString(fmt.Sprintf("@%d", index))
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("D=A")
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("@SP")
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("M=D")
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("A=A+1")
+	}
+}
+
+/**
+func (cw *CodeWriter) WriteArithmetic(command string) {
+	switch command {
+	case "add":
+		cw.buffer.WriteString(fmt.Sprintf("@%d", cw.sp))
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("D=M")
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString(fmt.Sprintf("@%d", cw.sp))
+		cw.buffer.WriteString("\n")
+		cw.buffer.WriteString("M=M+D")
+	}
+}
+**/
+
+func (cw *CodeWriter) Close() {
+	ioutil.WriteFile(cw.filename, cw.buffer.Bytes(), 0664)
 }
