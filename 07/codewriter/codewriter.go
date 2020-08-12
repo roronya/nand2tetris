@@ -53,6 +53,14 @@ func (cw *CodeWriter) WriteArithmetic(command string) {
 	switch command {
 	case "add":
 		cw.writeAdd()
+	case "sub":
+	case "neg":
+	case "eq":
+	case "gt":
+	case "lt":
+	case "and":
+	case "or":
+	case "not":
 	}
 }
 
@@ -67,6 +75,18 @@ func (cw *CodeWriter) writeAdd() {
 	cw.buffer.WriteString("\n")
 }
 
-func (cw *CodeWriter) Close() {
+func (cw *CodeWriter) writeSub() {
+	cw.buffer.WriteString("@SP")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("D=M")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("A=A-1")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("M=M-D")
+	cw.buffer.WriteString("\n")
+}
+
+func (
+	cw *CodeWriter) Close() {
 	ioutil.WriteFile(cw.filename, cw.buffer.Bytes(), 0664)
 }

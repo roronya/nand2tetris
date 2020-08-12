@@ -31,6 +31,7 @@ var VMCommandTypeMap = map[string]VMCommandType{
 	"or":   C_ARITHMETIC,
 	"not":  C_ARITHMETIC,
 	"push": C_PUSH,
+	"pop":  C_POP,
 }
 
 type Parser struct {

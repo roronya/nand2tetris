@@ -33,3 +33,13 @@ func TestWriteAdd(t *testing.T) {
 		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)
 	}
 }
+
+func TestWriteSub(t *testing.T) {
+	cw := New("filename")
+	cw.writeSub()
+	expected := "@SP\nD=M\nA=A-1\nM=M-D\n"
+	actual := cw.buffer.String()
+	if actual != expected {
+		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)
+	}
+}
