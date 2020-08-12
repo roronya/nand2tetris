@@ -17,7 +17,17 @@ func TestNew(t *testing.T) {
 func TestWritePush(t *testing.T) {
 	cw := New("filename")
 	cw.writePush("constant", 0)
-	expected := "@0\nD=A\n@SP\nM=D\nA=A+1"
+	expected := "@0\nD=A\n@SP\nM=D\nA=A+1\n"
+	actual := cw.buffer.String()
+	if actual != expected {
+		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)
+	}
+}
+
+func TestWriteAdd(t *testing.T) {
+	cw := New("filename")
+	cw.writeAdd()
+	expected := "@SP\nD=M\nA=A-1\nM=M+D\n"
 	actual := cw.buffer.String()
 	if actual != expected {
 		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)

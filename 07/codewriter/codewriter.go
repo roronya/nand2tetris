@@ -45,23 +45,27 @@ func (cw *CodeWriter) writePush(segment string, index int) {
 		cw.buffer.WriteString("M=D")
 		cw.buffer.WriteString("\n")
 		cw.buffer.WriteString("A=A+1")
+		cw.buffer.WriteString("\n")
 	}
 }
 
-/**
 func (cw *CodeWriter) WriteArithmetic(command string) {
 	switch command {
 	case "add":
-		cw.buffer.WriteString(fmt.Sprintf("@%d", cw.sp))
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("D=M")
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString(fmt.Sprintf("@%d", cw.sp))
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("M=M+D")
+		cw.writeAdd()
 	}
 }
-**/
+
+func (cw *CodeWriter) writeAdd() {
+	cw.buffer.WriteString("@SP")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("D=M")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("A=A-1")
+	cw.buffer.WriteString("\n")
+	cw.buffer.WriteString("M=M+D")
+	cw.buffer.WriteString("\n")
+}
 
 func (cw *CodeWriter) Close() {
 	ioutil.WriteFile(cw.filename, cw.buffer.Bytes(), 0664)

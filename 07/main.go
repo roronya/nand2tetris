@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	commands := "push constant 10"
+	commands := "push constant 10\npush constant 10\nadd"
 	buf := strings.NewReader(commands)
 	scanner := bufio.NewScanner(buf)
 	p := parser.New(scanner)
