@@ -40,6 +40,8 @@ func main() {
 		switch p.CommandType {
 		case parser.C_PUSH:
 			cw.WritePushPop(p.CommandType, p.Arg1, p.Arg2)
+		case parser.C_ARITHMETIC:
+			cw.WriteArithmetic(p.Command)
 		}
 	}
 	cw.Close()

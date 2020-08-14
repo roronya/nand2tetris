@@ -8,8 +8,6 @@ import (
 	"github.com/roronya/nand2tetris/07/parser"
 )
 
-var segmentMap = map[string]string{}
-
 type CodeWriter struct {
 	filename    string
 	buffer      *bytes.Buffer
@@ -41,8 +39,10 @@ func (cw *CodeWriter) writePush(segment string, index int) {
 			fmt.Sprintf("@%d", index),
 			"D=A",
 			"@SP",
+			"A=M",
 			"M=D",
-			"A=A+1",
+			"@SP",
+			"M=M+1",
 		})
 	}
 }
@@ -71,6 +71,7 @@ func (cw *CodeWriter) WriteArithmetic(command string) {
 }
 
 func (cw *CodeWriter) writeCalc(command string) {
+	// M=x, D=y
 	var commandType string
 	if command == "add" {
 		commandType = "M+D"
@@ -82,24 +83,38 @@ func (cw *CodeWriter) writeCalc(command string) {
 		commandType = "M|D"
 	}
 	cw.writeCodes([]string{
-		"@SP",
-		"D=M",
-		"A=A-1",
-		fmt.Sprintf("M=%s", commandType),
+		"@SP",                            // A=0, M=258
+		"M=M-1",                          // M=257
+		"A=M",                            // A=257, M=y
+		"D=M",                            // D=y
+		"@SP",                            // A=0, M=257
+		"M=M-1",                          // M=256
+		"A=M",                            // A=256, M=x
+		fmt.Sprintf("M=%s", commandType), // M= x +-&| y
+		"@SP",                            // A=0, M=256
+		"M=M+1",                          // M=257
 	})
 }
 
 func (cw *CodeWriter) writeNeg() {
 	cw.writeCodes([]string{
-		"@SP",
+		"@SP",   // A=0, M=258
+		"M=M-1", // M=257
+		"A=M",   // A=257, M=y
 		"M=-M",
+		"@SP",
+		"M=M+1",
 	})
 }
 
 func (cw *CodeWriter) writeNot() {
 	cw.writeCodes([]string{
-		"@SP",
+		"@SP",   // A=0, M=258
+		"M=M-1", // M=257
+		"A=M",   // A=257, M=y
 		"M=!M",
+		"@SP",
+		"M=M+1",
 	})
 }
 
@@ -115,20 +130,30 @@ func (cw *CodeWriter) writeCmp(command string) {
 	trueLabel := cw.generateNewLabel()
 	endLabel := cw.generateNewLabel()
 	cw.writeCodes([]string{
-		"@SP",
-		"D=M",
-		"A=A-1",
-		"D=M-D",
-		trueLabel,
-		fmt.Sprintf("D;%s", commandType),
-		"M=0",
-		endLabel,
+		"@SP",   // A=0, M=258
+		"M=M-1", // M=257
+		"A=M",   // A=257, M=y
+		"D=M",   // D=y
+		"@SP",   // A=0, M=257
+		"M=M-1", // M=256
+		"A=M",   // A=256, M=x
+		"D=M-D", // D=x-y
+		fmt.Sprintf("@%s", trueLabel),
+		fmt.Sprintf("D;%s", commandType), // x == y
+		// falseのとき
+		"@SP", // A=0, M=256
+		"A=M", // A=256, M=Memory[256]
+		"M=0", // Memory[256] = false
+		fmt.Sprintf("@%s", endLabel),
 		"0;JMP",
 		fmt.Sprintf("(%s)", trueLabel),
-		"M=-1",
-		endLabel,
-		"0;JMP",
+		// trueのとき
+		"@SP",  // A=0, M=256
+		"A=M",  // A=256, M=Memory[256]
+		"M=-1", // Memory[256] = true
 		fmt.Sprintf("(%s)", endLabel),
+		"@SP",   // A=0, M=256
+		"M=M+1", // M=257
 	})
 }
 
