@@ -11,8 +11,9 @@ import (
 var segmentMap = map[string]string{}
 
 type CodeWriter struct {
-	filename string
-	buffer   *bytes.Buffer
+	filename    string
+	buffer      *bytes.Buffer
+	labelNumber int
 }
 
 func New(filename string) *CodeWriter {
@@ -36,57 +37,118 @@ func (cw *CodeWriter) WritePushPop(command parser.VMCommandType, segment string,
 func (cw *CodeWriter) writePush(segment string, index int) {
 	switch segment {
 	case "constant":
-		cw.buffer.WriteString(fmt.Sprintf("@%d", index))
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("D=A")
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("@SP")
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("M=D")
-		cw.buffer.WriteString("\n")
-		cw.buffer.WriteString("A=A+1")
-		cw.buffer.WriteString("\n")
+		cw.writeCodes([]string{
+			fmt.Sprintf("@%d", index),
+			"D=A",
+			"@SP",
+			"M=D",
+			"A=A+1",
+		})
 	}
 }
 
 func (cw *CodeWriter) WriteArithmetic(command string) {
 	switch command {
 	case "add":
-		cw.writeAdd()
+		fallthrough
 	case "sub":
-	case "neg":
-	case "eq":
-	case "gt":
-	case "lt":
+		fallthrough
 	case "and":
+		fallthrough
 	case "or":
+		cw.writeCalc(command)
+	case "eq":
+		fallthrough
+	case "gt":
+		fallthrough
+	case "lt":
+		cw.writeCmp(command)
 	case "not":
+		cw.writeNot()
+	case "neg":
+		cw.writeNeg()
 	}
 }
 
-func (cw *CodeWriter) writeAdd() {
-	cw.buffer.WriteString("@SP")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("D=M")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("A=A-1")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("M=M+D")
-	cw.buffer.WriteString("\n")
+func (cw *CodeWriter) writeCalc(command string) {
+	var commandType string
+	if command == "add" {
+		commandType = "M+D"
+	} else if command == "sub" {
+		commandType = "M-D"
+	} else if command == "and" {
+		commandType = "M&D"
+	} else {
+		commandType = "M|D"
+	}
+	cw.writeCodes([]string{
+		"@SP",
+		"D=M",
+		"A=A-1",
+		fmt.Sprintf("M=%s", commandType),
+	})
 }
 
-func (cw *CodeWriter) writeSub() {
-	cw.buffer.WriteString("@SP")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("D=M")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("A=A-1")
-	cw.buffer.WriteString("\n")
-	cw.buffer.WriteString("M=M-D")
-	cw.buffer.WriteString("\n")
+func (cw *CodeWriter) writeNeg() {
+	cw.writeCodes([]string{
+		"@SP",
+		"M=-M",
+	})
 }
 
-func (
-	cw *CodeWriter) Close() {
+func (cw *CodeWriter) writeNot() {
+	cw.writeCodes([]string{
+		"@SP",
+		"M=!M",
+	})
+}
+
+func (cw *CodeWriter) writeCmp(command string) {
+	var commandType string
+	if command == "eq" {
+		commandType = "JEQ"
+	} else if command == "gt" {
+		commandType = "JGT"
+	} else {
+		commandType = "JLT"
+	}
+	trueLabel := cw.generateNewLabel()
+	endLabel := cw.generateNewLabel()
+	cw.writeCodes([]string{
+		"@SP",
+		"D=M",
+		"A=A-1",
+		"D=M-D",
+		trueLabel,
+		fmt.Sprintf("D;%s", commandType),
+		"M=0",
+		endLabel,
+		"0;JMP",
+		fmt.Sprintf("(%s)", trueLabel),
+		"M=-1",
+		endLabel,
+		"0;JMP",
+		fmt.Sprintf("(%s)", endLabel),
+	})
+}
+
+func (cw *CodeWriter) Close() {
 	ioutil.WriteFile(cw.filename, cw.buffer.Bytes(), 0664)
+}
+
+func (cw *CodeWriter) writeCode(code string) {
+	cw.buffer.WriteString(code)
+	cw.buffer.WriteString("\n")
+}
+
+func (cw *CodeWriter) writeCodes(codes []string) {
+	for _, code := range codes {
+		cw.writeCode(code)
+	}
+}
+
+func (cw *CodeWriter) generateNewLabel() string {
+	newLabel := fmt.Sprintf("LABEL%d", cw.labelNumber)
+	cw.labelNumber++
+	return newLabel
 }

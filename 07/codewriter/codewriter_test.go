@@ -26,7 +26,7 @@ func TestWritePush(t *testing.T) {
 
 func TestWriteAdd(t *testing.T) {
 	cw := New("filename")
-	cw.writeAdd()
+	cw.writeCalc("add")
 	expected := "@SP\nD=M\nA=A-1\nM=M+D\n"
 	actual := cw.buffer.String()
 	if actual != expected {
@@ -36,8 +36,18 @@ func TestWriteAdd(t *testing.T) {
 
 func TestWriteSub(t *testing.T) {
 	cw := New("filename")
-	cw.writeSub()
+	cw.writeCalc("sub")
 	expected := "@SP\nD=M\nA=A-1\nM=M-D\n"
+	actual := cw.buffer.String()
+	if actual != expected {
+		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)
+	}
+}
+
+func TestWriteNeg(t *testing.T) {
+	cw := New("filename")
+	cw.writeNeg()
+	expected := "@SP\nM=-M\n"
 	actual := cw.buffer.String()
 	if actual != expected {
 		t.Fatalf("cw.buffer.String() is %#v . got=%#v", expected, actual)
