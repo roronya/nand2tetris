@@ -54,6 +54,13 @@ func (cw *CodeWriter) WriteIfGoto(label string) {
 	})
 }
 
+func (cw *CodeWriter) WriteGoto(label string) {
+	cw.writeCodes([]string{
+		fmt.Sprintf("@%s", label),
+		"D;JMP",
+	})
+}
+
 func (cw *CodeWriter) push(segment string, index int) {
 	switch segment {
 	case "constant":

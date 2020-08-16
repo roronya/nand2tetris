@@ -48,6 +48,8 @@ func main() {
 			cw.WriteLabel(p.Arg1)
 		case parser.C_IF:
 			cw.WriteIfGoto(p.Arg1)
+		case parser.C_GOTO:
+			cw.WriteGoto(p.Arg1)
 		}
 	}
 	cw.Close()
