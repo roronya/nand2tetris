@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/roronya/nand2tetris/07/codewriter"
-	"github.com/roronya/nand2tetris/07/parser"
+	"github.com/roronya/nand2tetris/08/codewriter"
+	"github.com/roronya/nand2tetris/08/parser"
 )
 
 func main() {
@@ -44,6 +44,10 @@ func main() {
 			cw.WritePushPop(p.CommandType, p.Arg1, p.Arg2)
 		case parser.C_ARITHMETIC:
 			cw.WriteArithmetic(p.Command)
+		case parser.C_LABEL:
+			cw.WriteLabel(p.Arg1)
+		case parser.C_IF:
+			cw.WriteIfGoto(p.Arg1)
 		}
 	}
 	cw.Close()

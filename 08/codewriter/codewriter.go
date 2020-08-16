@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/roronya/nand2tetris/07/parser"
+	"github.com/roronya/nand2tetris/08/parser"
 )
 
 var registerMap = map[string]string{
@@ -39,6 +39,19 @@ func (cw *CodeWriter) WritePushPop(command parser.VMCommandType, segment string,
 	case parser.C_POP:
 		cw.pop(segment, index)
 	}
+}
+
+func (cw *CodeWriter) WriteLabel(name string) {
+	cw.writeCode(fmt.Sprintf("(%s)", name))
+}
+
+func (cw *CodeWriter) WriteIfGoto(label string) {
+	cw.writePop()
+	cw.writeCodes([]string{
+		"D=M",
+		fmt.Sprintf("@%s", label),
+		"D;JGT",
+	})
 }
 
 func (cw *CodeWriter) push(segment string, index int) {
