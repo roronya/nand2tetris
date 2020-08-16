@@ -53,6 +53,11 @@ func (cw *CodeWriter) push(segment string, index int) {
 			fmt.Sprintf("@R%d", 5+index),
 			"D=M",
 		})
+	case "pointer":
+		cw.writeCodes([]string{
+			fmt.Sprintf("@R%d", 3+index),
+			"D=M",
+		})
 	default:
 		cw.writeCodes([]string{
 			fmt.Sprintf("@%s", registerMap[segment]),
@@ -71,6 +76,10 @@ func (cw *CodeWriter) pop(segment string, index int) {
 	cw.writeCode("D=M")
 	if segment == "temp" {
 		cw.writeCode(fmt.Sprintf("@R%d", 5+index))
+	} else if segment == "pointer" {
+		cw.writeCodes([]string{
+			fmt.Sprintf("@R%d", 3+index),
+		})
 	} else {
 		cw.writeCodes([]string{
 			fmt.Sprintf("@%s", registerMap[segment]),
