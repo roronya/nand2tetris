@@ -59,6 +59,8 @@ func (p *Parser) Advance() error {
 	p.CommandType = VMCommandTypeMap[p.Command]
 	switch p.CommandType {
 	case C_PUSH:
+		fallthrough
+	case C_POP:
 		p.Arg1 = tokens[1]
 		casted, err := strconv.Atoi(tokens[2])
 		if err != nil {

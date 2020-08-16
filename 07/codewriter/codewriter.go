@@ -8,6 +8,13 @@ import (
 	"github.com/roronya/nand2tetris/07/parser"
 )
 
+var registerMap = map[string]string{
+	"local":    "LCL",
+	"argument": "ARG",
+	"this":     "THIS",
+	"that":     "THAT",
+}
+
 type CodeWriter struct {
 	filename    string
 	buffer      *bytes.Buffer
@@ -28,23 +35,51 @@ func (cw *CodeWriter) setFileName(filename string) {
 func (cw *CodeWriter) WritePushPop(command parser.VMCommandType, segment string, index int) {
 	switch command {
 	case parser.C_PUSH:
-		cw.writePush(segment, index)
+		cw.push(segment, index)
+	case parser.C_POP:
+		cw.pop(segment, index)
 	}
 }
 
-func (cw *CodeWriter) writePush(segment string, index int) {
+func (cw *CodeWriter) push(segment string, index int) {
 	switch segment {
 	case "constant":
 		cw.writeCodes([]string{
 			fmt.Sprintf("@%d", index),
 			"D=A",
-			"@SP",
-			"A=M",
-			"M=D",
-			"@SP",
-			"M=M+1",
 		})
+	case "temp":
+		cw.writeCodes([]string{
+			fmt.Sprintf("@R%d", 5+index),
+			"D=M",
+		})
+	default:
+		cw.writeCode(fmt.Sprintf("@%s", registerMap[segment]))
+		cw.writeCode("A=M")
+		for i := 0; i <= index; i++ {
+			cw.writeCode("A=A+1")
+		}
+		cw.writeCode("D=M")
 	}
+	cw.writePush()
+}
+
+func (cw *CodeWriter) pop(segment string, index int) {
+	cw.writePop()
+	if segment == "temp" {
+		cw.writeCode(fmt.Sprintf("@R%d", 5+index))
+	} else {
+		cw.writeCodes([]string{
+			fmt.Sprintf("@%s", registerMap[segment]),
+			"A=M",
+		})
+		for i := 0; i <= index; i++ {
+			cw.writeCode("A=A+1")
+		}
+	}
+	cw.writeCodes([]string{
+		"M=D",
+	})
 }
 
 func (cw *CodeWriter) WriteArithmetic(command string) {
@@ -72,50 +107,31 @@ func (cw *CodeWriter) WriteArithmetic(command string) {
 
 func (cw *CodeWriter) writeCalc(command string) {
 	// M=x, D=y
-	var commandType string
+	var calc string
 	if command == "add" {
-		commandType = "M+D"
+		calc = "M+D"
 	} else if command == "sub" {
-		commandType = "M-D"
+		calc = "M-D"
 	} else if command == "and" {
-		commandType = "M&D"
+		calc = "M&D"
 	} else {
-		commandType = "M|D"
+		calc = "M|D"
 	}
-	cw.writeCodes([]string{
-		"@SP",                            // A=0, M=258
-		"M=M-1",                          // M=257
-		"A=M",                            // A=257, M=y
-		"D=M",                            // D=y
-		"@SP",                            // A=0, M=257
-		"M=M-1",                          // M=256
-		"A=M",                            // A=256, M=x
-		fmt.Sprintf("M=%s", commandType), // M= x +-&| y
-		"@SP",                            // A=0, M=256
-		"M=M+1",                          // M=257
-	})
+	cw.writePoppop()
+	cw.writeCode(fmt.Sprintf("D=%s", calc))
+	cw.writePush()
 }
 
 func (cw *CodeWriter) writeNeg() {
-	cw.writeCodes([]string{
-		"@SP",   // A=0, M=258
-		"M=M-1", // M=257
-		"A=M",   // A=257, M=y
-		"M=-M",
-		"@SP",
-		"M=M+1",
-	})
+	cw.writePop()
+	cw.writeCode("D=-M")
+	cw.writePush()
 }
 
 func (cw *CodeWriter) writeNot() {
-	cw.writeCodes([]string{
-		"@SP",   // A=0, M=258
-		"M=M-1", // M=257
-		"A=M",   // A=257, M=y
-		"M=!M",
-		"@SP",
-		"M=M+1",
-	})
+	cw.writePop()
+	cw.writeCode("D=!M")
+	cw.writePush()
 }
 
 func (cw *CodeWriter) writeCmp(command string) {
@@ -129,32 +145,24 @@ func (cw *CodeWriter) writeCmp(command string) {
 	}
 	trueLabel := cw.generateNewLabel()
 	endLabel := cw.generateNewLabel()
+	cw.writePoppop()
 	cw.writeCodes([]string{
-		"@SP",   // A=0, M=258
-		"M=M-1", // M=257
-		"A=M",   // A=257, M=y
-		"D=M",   // D=y
-		"@SP",   // A=0, M=257
-		"M=M-1", // M=256
-		"A=M",   // A=256, M=x
 		"D=M-D", // D=x-y
 		fmt.Sprintf("@%s", trueLabel),
 		fmt.Sprintf("D;%s", commandType), // x == y
 		// falseのとき
-		"@SP", // A=0, M=256
-		"A=M", // A=256, M=Memory[256]
-		"M=0", // Memory[256] = false
+		"D=0",
+	})
+	cw.writePush()
+	cw.writeCodes([]string{
 		fmt.Sprintf("@%s", endLabel),
 		"0;JMP",
 		fmt.Sprintf("(%s)", trueLabel),
 		// trueのとき
-		"@SP",  // A=0, M=256
-		"A=M",  // A=256, M=Memory[256]
-		"M=-1", // Memory[256] = true
-		fmt.Sprintf("(%s)", endLabel),
-		"@SP",   // A=0, M=256
-		"M=M+1", // M=257
+		"D=-1",
 	})
+	cw.writePush()
+	cw.writeCode(fmt.Sprintf("(%s)", endLabel))
 }
 
 func (cw *CodeWriter) Close() {
@@ -176,4 +184,43 @@ func (cw *CodeWriter) generateNewLabel() string {
 	newLabel := fmt.Sprintf("LABEL%d", cw.labelNumber)
 	cw.labelNumber++
 	return newLabel
+}
+
+// Dの値をスタックの一番上に積んでSPをインクリメントする
+// 事後条件
+// A: SPのアドレス = 0
+// M: スタックの一番上のアドレス
+// D: 呼び出す前と同じ
+func (cw *CodeWriter) writePush() {
+	cw.writeCodes([]string{
+		"@SP",
+		"A=M",
+		"M=D",
+		"@SP",
+		"M=M+1",
+	})
+}
+
+// スタックの一番上をDにセットしてSPをデクリメントする
+// 事後条件
+// A: スタックの一番上のアドレス
+// M: スタックの一番上の値
+// D: 呼び出す前と同じ
+func (cw *CodeWriter) writePop() {
+	cw.writeCodes([]string{
+		"@SP",
+		"M=M-1",
+		"A=M",
+	})
+}
+
+// 2回popする
+// 事後条件
+// A: 呼び出し後のスタックの一番上のアドレス
+// M: 呼び出し後のスタックの一番上の値
+// D: 呼び出す前のスタックの一番上だった値
+func (cw *CodeWriter) writePoppop() {
+	cw.writePop()
+	cw.writeCode("D=M")
+	cw.writePop()
 }
