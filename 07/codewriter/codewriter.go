@@ -54,9 +54,11 @@ func (cw *CodeWriter) push(segment string, index int) {
 			"D=M",
 		})
 	default:
-		cw.writeCode(fmt.Sprintf("@%s", registerMap[segment]))
-		cw.writeCode("A=M")
-		for i := 0; i <= index; i++ {
+		cw.writeCodes([]string{
+			fmt.Sprintf("@%s", registerMap[segment]),
+			"A=M",
+		})
+		for i := 0; i < index; i++ {
 			cw.writeCode("A=A+1")
 		}
 		cw.writeCode("D=M")
@@ -66,6 +68,7 @@ func (cw *CodeWriter) push(segment string, index int) {
 
 func (cw *CodeWriter) pop(segment string, index int) {
 	cw.writePop()
+	cw.writeCode("D=M")
 	if segment == "temp" {
 		cw.writeCode(fmt.Sprintf("@R%d", 5+index))
 	} else {
@@ -73,7 +76,7 @@ func (cw *CodeWriter) pop(segment string, index int) {
 			fmt.Sprintf("@%s", registerMap[segment]),
 			"A=M",
 		})
-		for i := 0; i <= index; i++ {
+		for i := 0; i < index; i++ {
 			cw.writeCode("A=A+1")
 		}
 	}
