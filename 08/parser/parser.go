@@ -21,17 +21,23 @@ const (
 )
 
 var VMCommandTypeMap = map[string]VMCommandType{
-	"add":  C_ARITHMETIC,
-	"sub":  C_ARITHMETIC,
-	"neg":  C_ARITHMETIC,
-	"eq":   C_ARITHMETIC,
-	"gt":   C_ARITHMETIC,
-	"lt":   C_ARITHMETIC,
-	"and":  C_ARITHMETIC,
-	"or":   C_ARITHMETIC,
-	"not":  C_ARITHMETIC,
-	"push": C_PUSH,
-	"pop":  C_POP,
+	"add":      C_ARITHMETIC,
+	"sub":      C_ARITHMETIC,
+	"neg":      C_ARITHMETIC,
+	"eq":       C_ARITHMETIC,
+	"gt":       C_ARITHMETIC,
+	"lt":       C_ARITHMETIC,
+	"and":      C_ARITHMETIC,
+	"or":       C_ARITHMETIC,
+	"not":      C_ARITHMETIC,
+	"push":     C_PUSH,
+	"pop":      C_POP,
+	"label":    C_LABEL,
+	"goto":     C_GOTO,
+	"if-goto":  C_IF,
+	"function": C_FUNCTION,
+	"call":     C_CALL,
+	"return":   C_RETURN,
 }
 
 type Parser struct {
@@ -58,6 +64,10 @@ func (p *Parser) Advance() error {
 	p.Command = tokens[0]
 	p.CommandType = VMCommandTypeMap[p.Command]
 	switch p.CommandType {
+	case C_FUNCTION:
+		fallthrough
+	case C_CALL:
+		fallthrough
 	case C_PUSH:
 		fallthrough
 	case C_POP:
@@ -67,6 +77,14 @@ func (p *Parser) Advance() error {
 			return err
 		}
 		p.Arg2 = casted
+	case C_LABEL:
+		fallthrough
+	case C_GOTO:
+		fallthrough
+	case C_IF:
+		p.Arg1 = tokens[1]
+	case C_RETURN:
+		// do nothing
 	}
 	return nil
 }

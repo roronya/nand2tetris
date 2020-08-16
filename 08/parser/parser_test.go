@@ -70,7 +70,14 @@ lt
 and
 or
 not
-push`
+push xxx 0
+pop xxx 0
+label xxx
+goto xxx
+if-goto xxx
+function x 0
+call x 0
+return`
 	expecteds := []VMCommandType{
 		C_ARITHMETIC,
 		C_ARITHMETIC,
@@ -82,11 +89,19 @@ push`
 		C_ARITHMETIC,
 		C_ARITHMETIC,
 		C_PUSH,
+		C_POP,
+		C_LABEL,
+		C_GOTO,
+		C_IF,
+		C_FUNCTION,
+		C_CALL,
+		C_RETURN,
 	}
 	p := newParser(commands)
 	for _, expected := range expecteds {
 		p.HasMoreCommands()
 		p.Advance()
+		t.Logf("%v", expected)
 		if p.CommandType != expected {
 			t.Fatalf("p.CommandType of %v is expected %v. got=%v", p.Command, expected, p.CommandType)
 		}
