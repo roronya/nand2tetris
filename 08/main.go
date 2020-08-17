@@ -50,6 +50,10 @@ func main() {
 			cw.WriteIfGoto(p.Arg1)
 		case parser.C_GOTO:
 			cw.WriteGoto(p.Arg1)
+		case parser.C_FUNCTION:
+			cw.WriteFunction(p.Arg1, p.Arg2)
+		case parser.C_RETURN:
+			cw.WriteReturn()
 		}
 	}
 	cw.Close()

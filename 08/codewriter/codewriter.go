@@ -61,6 +61,60 @@ func (cw *CodeWriter) WriteGoto(label string) {
 	})
 }
 
+func (cw *CodeWriter) WriteFunction(name string, localVariableCount int) {
+	/**
+	callの処理っぽいのでやらないでみる
+	// 呼び出す前のLCL,ARG,THIS,THATをpushしておき、return時に巻き戻せるようにしておく
+	cw.writeCodes([]string{"@LCL", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@ARG", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@THIS", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@THAT", "D=M"})
+	cw.writePush()
+	**/
+	// 呼び出す前のLCL,ARG,THIS,THATをpushした直後のSPのアドレスをLCLのポインタとする
+	cw.writeCodes([]string{
+		"@SP",
+		"D=M",
+		"@LCL",
+		"M=D",
+	})
+	// localVariableCount回初期化しておく
+	for i := 0; i < localVariableCount; i++ {
+		cw.writeCodes([]string{
+			"@0",
+			"D=A",
+		})
+		cw.writePush()
+	}
+}
+
+func (cw *CodeWriter) WriteReturn() {
+	// 演算結果であるスタックのヘッドを、取り出してR13に入れておく
+	cw.writePop()
+	cw.writeCodes([]string{"D=M", "@R13", "M=D"})
+	// このあとの処理でARGを上書きしてしまうが、この時点でのARGの値を後で使いたいのでR14に入れておく
+	cw.writeCodes([]string{"@ARG", "D=M", "@R14", "M=D"})
+	// SPをこの時点でのLCLの位置まで戻す
+	cw.writeCodes([]string{"@LCL", "D=M", "@SP", "M=D"})
+	// このSPからpopしていくとTHAT, THIS, ARG, LCLの順でcallerの状態が手に入るのでセットしていく
+	cw.writePop()
+	cw.writeCodes([]string{"D=M", "@THAT", "M=D"})
+	cw.writePop()
+	cw.writeCodes([]string{"D=M", "@THIS", "M=D"})
+	cw.writePop()
+	cw.writeCodes([]string{"D=M", "@ARG", "M=D"})
+	cw.writePop()
+	cw.writeCodes([]string{"D=M", "@LCL", "M=D"})
+	// R14にいれたARGの位置までSPを戻す
+	cw.writeCodes([]string{"@R14", "D=M", "@SP", "M=D"})
+	// R13にいれたスタックのヘッドをpushする
+	cw.writeCodes([]string{"@R13", "D=M"})
+	cw.writePush()
+}
+
 func (cw *CodeWriter) push(segment string, index int) {
 	switch segment {
 	case "constant":
