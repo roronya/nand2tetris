@@ -61,20 +61,9 @@ func (cw *CodeWriter) WriteGoto(label string) {
 	})
 }
 
+// callの中で@ARGはセットされているが、@LCLはセットされていない
 func (cw *CodeWriter) WriteFunction(name string, localVariableCount int) {
 	cw.WriteLabel(name)
-	/**
-	callの処理っぽいのでやらないでみる
-	// 呼び出す前のLCL,ARG,THIS,THATをpushしておき、return時に巻き戻せるようにしておく
-	cw.writeCodes([]string{"@LCL", "D=M"})
-	cw.writePush()
-	cw.writeCodes([]string{"@ARG", "D=M"})
-	cw.writePush()
-	cw.writeCodes([]string{"@THIS", "D=M"})
-	cw.writePush()
-	cw.writeCodes([]string{"@THAT", "D=M"})
-	cw.writePush()
-	**/
 	// 呼び出す前のLCL,ARG,THIS,THATをpushした直後のSPのアドレスをLCLのポインタとする
 	cw.writeCodes([]string{
 		"@SP",
@@ -114,6 +103,37 @@ func (cw *CodeWriter) WriteReturn() {
 	// R13にいれたスタックのヘッドをpushする
 	cw.writeCodes([]string{"@R13", "D=M"})
 	cw.writePush()
+}
+
+func (cw *CodeWriter) WriteCall(name string, argumentCount int) {
+	// 引数の数だけSPから引いた場所が新しいARGになるので計算しておいて後でセットする
+	cw.writeCodes([]string{"@SP", "D=M"})
+	for i := 0; i < argumentCount; i++ {
+		cw.writeCode("D=D-1")
+	}
+	cw.writeCodes([]string{"@R13", "M=D"})
+	// 呼び出す前のLCL,ARG,THIS,THATをpushしておき、return時に巻き戻せるようにしておく
+	cw.writeCodes([]string{"@LCL", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@ARG", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@THIS", "D=M"})
+	cw.writePush()
+	cw.writeCodes([]string{"@THAT", "D=M"})
+	cw.writePush()
+	// 計算しておいた新しいARGをセットする
+	cw.writeCodes([]string{"@R13", "D=M", "@ARG", "M=D"})
+	cw.writeCodes([]string{fmt.Sprintf("@%s", name), "D;JMP"})
+}
+
+func (cw *CodeWriter) WriteBootstrap() {
+	cw.writeCodes([]string{
+		"@256",
+		"D=A",
+		"@SP",
+		"M=D",
+	})
+	cw.WriteCall("Sys.init", 0)
 }
 
 func (cw *CodeWriter) push(segment string, index int) {
