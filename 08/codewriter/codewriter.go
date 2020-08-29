@@ -62,6 +62,7 @@ func (cw *CodeWriter) WriteGoto(label string) {
 }
 
 func (cw *CodeWriter) WriteFunction(name string, localVariableCount int) {
+	cw.WriteLabel(name)
 	/**
 	callの処理っぽいのでやらないでみる
 	// 呼び出す前のLCL,ARG,THIS,THATをpushしておき、return時に巻き戻せるようにしておく

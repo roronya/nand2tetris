@@ -1,3 +1,4 @@
+(SimpleFunction.test)
 @SP
 D=M
 @LCL
